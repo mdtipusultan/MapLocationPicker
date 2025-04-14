@@ -1,9 +1,7 @@
 # MapLocationPicker
 A simple iOS Swift app using Google Maps SDK that allows users to select a location by tapping or dragging a marker pin. Automatically centers on user's current location.
 
-# MapLocationPicker
-
-An iOS app built with Swift and Google Maps SDK. It allows users to:
+It allows users to:
 
 - Automatically show the current location with a pin.
 - Tap anywhere on the map to place a new marker.

@@ -29,14 +29,40 @@ class ViewController: UIViewController, GMSMapViewDelegate, CLLocationManagerDel
         mapView.delegate = self
         view.addSubview(mapView)
     }
-
-    // CLLocationManagerDelegate method - this is called when the location is updated
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.first else { return }
 
+        let latitude = location.coordinate.latitude
+        let longitude = location.coordinate.longitude
+
+        print("📍 Current Location: Latitude: \(latitude), Longitude: \(longitude)")
+
+        // Reverse Geocoding to get the place
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error = error {
+                print("❌ Reverse geocoding failed: \(error.localizedDescription)")
+                return
+            }
+
+            if let placemark = placemarks?.first {
+                let name = placemark.name ?? ""
+                let locality = placemark.locality ?? ""
+                let administrativeArea = placemark.administrativeArea ?? ""
+                let country = placemark.country ?? ""
+
+                let fullAddress = "\(name), \(locality), \(administrativeArea), \(country)"
+                print("📌 Address: \(fullAddress)")
+
+                // Update marker title
+                self.currentMarker?.title = fullAddress
+            }
+        }
+
         // Set camera to user's current location
-        let camera = GMSCameraPosition.camera(withLatitude: location.coordinate.latitude,
-                                              longitude: location.coordinate.longitude, zoom: 14.0)
+        let camera = GMSCameraPosition.camera(withLatitude: latitude,
+                                              longitude: longitude, zoom: 14.0)
         mapView.animate(to: camera)
 
         // Drop a pin at current location if not already placed
@@ -47,6 +73,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, CLLocationManagerDel
             currentMarker?.isDraggable = true
         }
     }
+
+
 
     // Handle any errors with location manager
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

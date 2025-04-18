@@ -14,6 +14,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, CLLocationManagerDel
     var mapView: GMSMapView!
     var currentMarker: GMSMarker?
     let locationManager = CLLocationManager()
+    
+    var didMoveMapManually = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -60,11 +62,20 @@ class ViewController: UIViewController, GMSMapViewDelegate, CLLocationManagerDel
             }
         }
 
-        // Set camera to user's current location
-        let camera = GMSCameraPosition.camera(withLatitude: latitude,
-                                              longitude: longitude, zoom: 14.0)
-        mapView.animate(to: camera)
+//        // Set camera to user's current location
+//        let camera = GMSCameraPosition.camera(withLatitude: latitude,
+//                                              longitude: longitude, zoom: 14.0)
+//        mapView.animate(to: camera)
 
+        // Move camera only if user hasn’t moved the map manually
+        if !didMoveMapManually {
+            let camera = GMSCameraPosition.camera(withLatitude: latitude,
+                                                  longitude: longitude, zoom: 14.0)
+            mapView.animate(to: camera)
+        }
+
+        
+        
         // Drop a pin at current location if not already placed
         if currentMarker == nil {
             currentMarker = GMSMarker(position: location.coordinate)
@@ -82,24 +93,84 @@ class ViewController: UIViewController, GMSMapViewDelegate, CLLocationManagerDel
     }
 
     // When the user taps on the map
+//    func mapView(_ mapView: GMSMapView, didTapAt coordinate: CLLocationCoordinate2D) {
+//        // Clear previous marker if any
+//        currentMarker?.map = nil
+//
+//        // Add a new marker at tapped location
+//        currentMarker = GMSMarker(position: coordinate)
+//        currentMarker?.title = "Selected Location"
+//        currentMarker?.map = mapView
+//        currentMarker?.isDraggable = true
+//
+//        // Print coordinates of the tapped location
+//        print("Tapped Location: Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)")
+//    }
+
+    // When the user finishes dragging the marker
+//    func mapView(_ mapView: GMSMapView, didEndDragging marker: GMSMarker) {
+//        let newCoordinate = marker.position
+//        // Print the new location after dragging
+//        print("Dragged Location: Latitude: \(newCoordinate.latitude), Longitude: \(newCoordinate.longitude)")
+//    }
+    
+    
     func mapView(_ mapView: GMSMapView, didTapAt coordinate: CLLocationCoordinate2D) {
-        // Clear previous marker if any
         currentMarker?.map = nil
 
-        // Add a new marker at tapped location
         currentMarker = GMSMarker(position: coordinate)
         currentMarker?.title = "Selected Location"
         currentMarker?.map = mapView
         currentMarker?.isDraggable = true
 
-        // Print coordinates of the tapped location
         print("Tapped Location: Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)")
-    }
+        
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error = error {
+                print("❌ Reverse geocoding failed: \(error.localizedDescription)")
+                return
+            }
 
-    // When the user finishes dragging the marker
+            if let placemark = placemarks?.first {
+                let name = placemark.name ?? ""
+                let locality = placemark.locality ?? ""
+                let administrativeArea = placemark.administrativeArea ?? ""
+                let country = placemark.country ?? ""
+
+                let fullAddress = "\(name), \(locality), \(administrativeArea), \(country)"
+                print("📍 Tapped Address: \(fullAddress)")
+
+                self.currentMarker?.title = fullAddress
+            }
+        }
+    }
+    
     func mapView(_ mapView: GMSMapView, didEndDragging marker: GMSMarker) {
         let newCoordinate = marker.position
-        // Print the new location after dragging
         print("Dragged Location: Latitude: \(newCoordinate.latitude), Longitude: \(newCoordinate.longitude)")
+        
+        let location = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error = error {
+                print("❌ Reverse geocoding failed: \(error.localizedDescription)")
+                return
+            }
+
+            if let placemark = placemarks?.first {
+                let name = placemark.name ?? ""
+                let locality = placemark.locality ?? ""
+                let administrativeArea = placemark.administrativeArea ?? ""
+                let country = placemark.country ?? ""
+
+                let fullAddress = "\(name), \(locality), \(administrativeArea), \(country)"
+                print("📍 Dragged Address: \(fullAddress)")
+
+                marker.title = fullAddress
+            }
+        }
     }
+
 }
